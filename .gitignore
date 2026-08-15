@@ -1,0 +1,26 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local quota state, if anyone points ROZETTA_QUOTA_FILE at the repo
+quota.json
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

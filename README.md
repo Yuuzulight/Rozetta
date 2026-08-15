@@ -177,3 +177,7 @@ Nothing in the suite touches the network. The Data API is stubbed through an htt
 ## Not in v1
 
 No video download, no search tool, no OAuth or private video access, no built-in summarisation, no caching.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

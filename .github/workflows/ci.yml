@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+
+      # The suite never touches the network, so no API key is needed here and
+      # none is configured. If a test ever starts needing one, it has stopped
+      # being a unit test.
+      - name: Test
+        run: python -m pytest --cov --cov-report=term-missing --cov-fail-under=90
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Guards the mistake that shipped a broken bundle once already: a
+      # machine-specific path baked into a supposedly portable plugin.
+      - name: Build the portable plugin bundle
+        run: python packaging/build_plugin.py
+
+      - name: Check the bundle has no absolute paths
+        run: |
+          python - <<'PY'
+          import json, re, zipfile
+          with zipfile.ZipFile("dist/rozetta.plugin") as bundle:
+              names = bundle.namelist()
+              assert ".claude-plugin/plugin.json" in names, names
+              assert ".mcp.json" in names, names
+              server = json.loads(bundle.read(".mcp.json"))["mcpServers"]["rozetta"]
+          for value in [server["command"], *server.get("args", [])]:
+              assert not re.match(r"^([A-Za-z]:[\\/]|/)", value), f"absolute path: {value}"
+          print("bundle OK:", names)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rozetta-plugin
+          path: dist/rozetta.plugin

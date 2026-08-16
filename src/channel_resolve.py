@@ -31,11 +31,23 @@ from models import ChannelQuery, ChannelResolutionFailed
 
 CHANNEL_ID = re.compile(r"^UC[0-9A-Za-z_-]{22}$")
 
-# - Three places the channel ID shows up in a rendered channel page. Any hit wins.
+# - Only tags where the page declares its OWN identity. Order is by trust.
+#
+#   Do not be tempted to add a bare `"channelId":"UC..."` pattern. A rendered
+#   channel page carries a dozen of those for recommended channels, sidebar
+#   videos and the like, and on every page tested the real channel was not
+#   among them — so it returns a confidently wrong channel rather than failing.
+#   Silently answering about the wrong channel is worse than not answering.
 _PAGE_ID_PATTERNS = (
-    re.compile(r'"channelId"\s*:\s*"(UC[0-9A-Za-z_-]{22})"'),
+    re.compile(
+        r'<link\s+rel="canonical"\s+href="https://www\.youtube\.com/channel/'
+        r'(UC[0-9A-Za-z_-]{22})"'
+    ),
     re.compile(r'<meta\s+itemprop="identifier"\s+content="(UC[0-9A-Za-z_-]{22})"'),
-    re.compile(r'href="https://www\.youtube\.com/channel/(UC[0-9A-Za-z_-]{22})"'),
+    re.compile(
+        r'<meta\s+property="og:url"\s+content="https://www\.youtube\.com/channel/'
+        r'(UC[0-9A-Za-z_-]{22})"'
+    ),
 )
 
 _BROWSER_HEADERS = {

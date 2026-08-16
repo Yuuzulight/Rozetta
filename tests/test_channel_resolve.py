@@ -98,13 +98,46 @@ def test_legacy_custom_has_no_api_parameter():
 
 
 def test_legacy_custom_resolves_through_the_page_fallback():
-    body = f'window.ytInitialData = {{"channelId":"{CHANNEL_ID}"}};'
+    body = (
+        f'<link rel="canonical" href="https://www.youtube.com/channel/{CHANNEL_ID}">'
+    )
     resolved = resolve_channel_query(
         "https://www.youtube.com/c/RickAstleyOfficial", http=page_client(body=body)
     )
     assert resolved.param == "id"
     assert resolved.value == CHANNEL_ID
     assert resolved.source == "legacy_custom"
+
+
+def test_unrelated_channel_ids_in_the_page_are_ignored():
+    # - A real channel page carries a dozen "channelId" values for recommended
+    #   channels and sidebar videos, none of them the channel you asked about.
+    #   Reading those returned a confidently wrong channel; only tags where the
+    #   page declares its own identity count.
+    other = "UCin0m13qWv3-051xlWlHamA"
+    body = (
+        f'window.ytInitialData = {{"channelId":"{other}","more":"{other}"}};'
+        f'<a href="https://www.youtube.com/channel/{other}">recommended</a>'
+        f'<link rel="canonical" href="https://www.youtube.com/channel/{CHANNEL_ID}">'
+    )
+
+    resolved = resolve_channel_query("youtube.com/c/Whoever", http=page_client(body=body))
+
+    assert resolved.value == CHANNEL_ID
+    assert resolved.value != other
+
+
+def test_a_page_with_only_unrelated_ids_fails_rather_than_guessing():
+    other = "UCin0m13qWv3-051xlWlHamA"
+    body = f'window.ytInitialData = {{"channelId":"{other}"}};'
+
+    with pytest.raises(ChannelResolutionFailed, match="couldn't find a channel ID"):
+        resolve_channel_query("youtube.com/c/Whoever", http=page_client(body=body))
+
+
+def test_og_url_is_accepted_as_an_identity_tag():
+    body = f'<meta property="og:url" content="https://www.youtube.com/channel/{CHANNEL_ID}">'
+    assert resolve_channel_query("youtube.com/c/Thing", http=page_client(body=body)).value == CHANNEL_ID
 
 
 def test_legacy_custom_reads_the_itemprop_meta_tag_too():

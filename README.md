@@ -1,5 +1,7 @@
 # Rozetta
 
+[![CI](https://github.com/Yuuzulight/Rozetta/actions/workflows/ci.yml/badge.svg)](https://github.com/Yuuzulight/Rozetta/actions/workflows/ci.yml)
+
 An MCP server that gives a model access to YouTube transcripts and public statistics.
 
 Rozetta doesn't summarise anything. It fetches clean data and hands it over; whatever calls it does the reading and the thinking. That split is deliberate, and it's why the server works the same whether it's Claude Desktop on the other end or something else entirely.

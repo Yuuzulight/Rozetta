@@ -64,7 +64,7 @@ def load_dotenv(path: Path | None = None) -> None:
 
 server = MCPServer(
     name="rozetta",
-    version="0.1.1",
+    version="1.0.0",
     instructions=(
         "Rozetta exposes YouTube transcripts and public statistics as raw data. "
         "It does no summarising of its own — read the data it returns and do the "

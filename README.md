@@ -183,18 +183,33 @@ Restart Claude Desktop completely afterwards — quit it from the system tray, n
 
 ### Claude Desktop, as a plugin
 
-Newer builds take a `.plugin` bundle instead, which sidesteps the config file entirely. A plugin is a zip containing `.claude-plugin/plugin.json` and a `.mcp.json` at the root:
+Newer builds take a `.plugin` bundle instead, which sidesteps the config file entirely.
 
+**The easy way:** download `rozetta.plugin` from the [latest release](https://github.com/Yuuzulight/Rozetta/releases/latest) and drag it into Claude Desktop's extensions settings screen. Nothing to clone or configure.
+
+That bundle launches the server with [uv](https://docs.astral.sh/uv/), which is the only prerequisite — uv fetches the code and its dependencies itself, so there's no virtualenv to manage and no Python version to match. Set your key as a `YOUTUBE_API_KEY` environment variable and restart the client so it inherits it.
+
+Worth doing once before installing, because the first launch pulls about 40 packages and can outlast a client's startup timeout:
+
+```bash
+uvx --from git+https://github.com/Yuuzulight/Rozetta rozetta
 ```
-rozetta/
-├── .claude-plugin/
-│   └── plugin.json     # name, version, description, author
-└── .mcp.json           # the same mcpServers block as above
+
+It will sit there waiting for input, which is what a healthy stdio server does. Ctrl+C out of it.
+
+#### Building a bundle yourself
+
+```bash
+python packaging/build_plugin.py              # portable, tracks the default branch
+python packaging/build_plugin.py --ref v0.1.0 # portable, pinned to a tag
+python packaging/build_plugin.py --local      # points at this checkout's venv
 ```
 
-Zip the directory contents — `manifest` at `.claude-plugin/plugin.json`, not the parent folder — name it `rozetta.plugin`, and install it from Claude Desktop's extensions settings screen, which accepts a dragged-in file. Note the paths inside are absolute, so moving the repo means rebuilding the bundle.
+Output lands in `dist/`. The `--local` flavour runs your working tree, so edits take effect without rebuilding, but it only works on the machine that built it — the script refuses to put a machine-specific path in a portable bundle.
 
-Plugins have no UI field for secrets, so put the key in `.env` in the repo root and let the server read it at startup. That file is gitignored. Write it as plain UTF-8 without a BOM if you can — the loader copes with one either way, but PowerShell's `Set-Content -Encoding utf8` adds one.
+A plugin is just a zip with `.claude-plugin/plugin.json` and a `.mcp.json` at the root. Zip the *contents*, not the parent folder; a bundle with everything nested one level down is rejected.
+
+The local flavour reads your key from `.env` in the repo root, since the server looks there at startup. Write that file as plain UTF-8 — the loader handles a BOM, but PowerShell's `Set-Content -Encoding utf8` adds one and other tools are less forgiving.
 
 ## Tests
 

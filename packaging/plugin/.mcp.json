@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "rozetta": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/Yuuzulight/Rozetta",
+        "rozetta"
+      ]
+    }
+  }
+}

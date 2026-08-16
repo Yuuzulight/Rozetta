@@ -11,6 +11,7 @@ tool-call logs on the client side.
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -168,6 +169,11 @@ def get_channel_stats(channel_url_or_id: str) -> ChannelStats:
 
 
 def main() -> None:
+    # - httpx logs every request URL at INFO, and this process's stderr is captured
+    #   into the MCP client's log files. Belt and braces alongside sending the key
+    #   as a header rather than a query parameter.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
     load_dotenv()
     # - Read once, at startup. Deliberately not a tool argument: keeping it out of
     #   the tool schemas keeps it out of client-side tool-call logs.

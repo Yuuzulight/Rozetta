@@ -190,13 +190,33 @@ def test_a_rejected_key_points_at_the_cloud_console(tracker):
     assert "YouTube Data API v3 is enabled" in message
 
 
-def test_the_key_travels_in_the_query_string_not_from_the_caller(tracker):
+def test_the_key_is_sent_as_a_header(tracker):
     fake = FakeDataAPI({"videos": {"items": [video_item()]}})
     configure_fake_api(fake, tracker, api_key="secret-key")
 
     get_video_stats(VIDEO_ID)
 
-    assert fake.requests[0].params["key"] == "secret-key"
+    assert fake.requests[0].headers["X-goog-api-key"] == "secret-key"
+
+
+def test_the_key_never_appears_in_a_request_url(tracker):
+    # - It used to ride in the query string, which meant httpx logged it at INFO
+    #   and it landed in the MCP client's log files. Never again.
+    fake = FakeDataAPI(
+        {
+            "channels": {"items": [channel_item()]},
+            "playlistItems": playlist_items([days_ago(2)]),
+            "videos": {"items": [video_item()]},
+        }
+    )
+    configure_fake_api(fake, tracker, api_key="secret-key")
+
+    get_video_stats(VIDEO_ID)
+    get_channel_stats("@testchannel")
+
+    for request in fake.requests:
+        assert "secret-key" not in str(request.url)
+        assert "key" not in request.params
 
 
 def test_network_failure_is_wrapped(tracker):

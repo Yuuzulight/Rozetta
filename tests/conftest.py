@@ -18,6 +18,8 @@ class RecordedRequest:
         self.url = request.url
         self.path = request.url.path
         self.params = dict(request.url.params)
+        # - Kept as httpx.Headers so lookups stay case-insensitive.
+        self.headers = request.headers
 
 
 class FakeDataAPI:

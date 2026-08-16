@@ -89,8 +89,14 @@ class YouTubeDataAPI:
         self.tracker.record(endpoint)
 
         try:
+            # - Key goes in a header, never the query string. Anything that logs a
+            #   URL — httpx at INFO, a proxy, a crash report — would otherwise
+            #   capture the key verbatim, and MCP server stderr lands in the
+            #   client's log files.
             response = self.http.get(
-                f"/{ENDPOINT_PATHS[endpoint]}", params={**params, "key": self.api_key}
+                f"/{ENDPOINT_PATHS[endpoint]}",
+                params=params,
+                headers={"X-goog-api-key": self.api_key},
             )
         except httpx.HTTPError as exc:
             raise YouTubeApiError(f"Network error calling {endpoint}: {exc}") from exc

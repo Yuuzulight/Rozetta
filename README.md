@@ -127,7 +127,35 @@ python -m venv .venv
 
 On macOS or Linux that last line is `.venv/bin/python -m pip install -e ".[dev]"`.
 
-Then either copy `.env.example` to `.env` and put your key in it, or pass the key through your MCP client's config (below), which is the tidier option.
+### Getting a YouTube API key
+
+Free, and no payment details required. Skip this if you only want transcripts — those work without a key, and only `get_video_stats` and `get_channel_stats` need one.
+
+If you've never used Google Cloud, the whole thing takes about five minutes.
+
+1. **Sign in** at [console.cloud.google.com](https://console.cloud.google.com/) with any Google account. Accept the terms if prompted. If it offers a free trial or asks for a card, ignore it — nothing here needs billing enabled.
+
+2. **Create a project.** Use the project dropdown in the top bar, immediately right of the "Google Cloud" logo — it may read "Select a project". Click it, then **New project**. Name it something like `rozetta`, leave Location as "No organization", and click **Create**. It takes a few seconds to appear.
+
+3. **Select that project** in the same dropdown. Don't skip this. It's the most common way this goes wrong: you enable the API on whichever project was already selected, create the key under another, and then spend a while wondering why a valid-looking key returns 403.
+
+4. **Enable the API.** Open [the YouTube Data API v3 page](https://console.cloud.google.com/apis/library/youtube.googleapis.com) and click **Enable**. Check the project name shown on that page is the one you just made.
+
+5. **Create the key.** Go to **APIs & Services → Credentials**, click **+ Create credentials**, and choose **API key**. It appears in a dialog straight away. Copy it.
+
+6. **Restrict it.** In that same dialog click **Edit API key**, scroll to **API restrictions**, choose **Restrict key**, tick **YouTube Data API v3**, and save. Thirty seconds of work that means a leaked key can't be spent on anything else in your project. Leave *Application* restrictions on "None" — this runs as a local process with no stable IP or referrer.
+
+Keys start with `AIza` and are 39 characters. Put yours in `.env` (copy `.env.example`), or pass it through your MCP client's config — whichever suits the client you're using.
+
+Treat it as a secret. It isn't a password, but anyone holding it can spend your daily quota. If it ever ends up somewhere public, delete it in the Credentials screen and make a new one; it costs nothing.
+
+#### Check it works
+
+```bash
+.venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'src'); import server, stats; server.load_dotenv(); import os; k=os.environ.get('YOUTUBE_API_KEY'); print('key loaded:', bool(k)); stats.configure(k); print(stats.get_video_stats('dQw4w9WgXcQ').view_count, 'views')"
+```
+
+A view count means the key, the project, and the API enablement are all correct. "YOUTUBE_API_KEY is not set" means it never reached the server. A message about the key being rejected means the key or the enablement is wrong — usually step 3.
 
 ### Claude Desktop
 
@@ -164,24 +192,9 @@ rozetta/
 └── .mcp.json           # the same mcpServers block as above
 ```
 
-Zip the directory contents, name it `rozetta.plugin`, and drag it onto Settings → Extensions. Note that the paths inside are absolute, so moving the repo means rebuilding the bundle.
+Zip the directory contents — `manifest` at `.claude-plugin/plugin.json`, not the parent folder — name it `rozetta.plugin`, and install it from Claude Desktop's extensions settings screen, which accepts a dragged-in file. Note the paths inside are absolute, so moving the repo means rebuilding the bundle.
 
 Plugins have no UI field for secrets, so put the key in `.env` in the repo root and let the server read it at startup. That file is gitignored. Write it as plain UTF-8 without a BOM if you can — the loader copes with one either way, but PowerShell's `Set-Content -Encoding utf8` adds one.
-
-### Getting an API key
-
-Free, and no payment details required. Only the two statistics tools need it.
-
-1. Sign in at [console.cloud.google.com](https://console.cloud.google.com/) with a Google account. Accept the terms if you're asked to; ignore any prompt about a free trial or billing, since none of this needs it.
-2. Create a project from the project dropdown in the top bar, next to the Google Cloud logo. Click **New project**, give it a name like `rozetta`, leave the location as-is, and hit **Create**. It takes a few seconds.
-3. Make sure that project is the one selected in the dropdown. This is the step people miss, and it leads to enabling the API on one project while the key belongs to another.
-4. Go to [the YouTube Data API v3 page](https://console.cloud.google.com/apis/library/youtube.googleapis.com) and click **Enable**.
-5. Go to **APIs & Services → Credentials**, click **Create credentials**, and pick **API key**. It appears immediately. Copy it.
-6. Optional but worth doing: click **Edit API key**, and under **API restrictions** choose **Restrict key** and select YouTube Data API v3. That way a leaked key can't be used against anything else. Leave application restrictions set to None, since this runs as a local process with no fixed IP or referrer.
-
-The key looks like `AIza...` and is about 39 characters. Paste it into the Claude Desktop config above, or into `.env`.
-
-Your quota is 10,000 units a day, which is roughly 10,000 video or channel lookups. That's plenty for interactive use.
 
 ## Tests
 

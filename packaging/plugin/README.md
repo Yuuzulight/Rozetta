@@ -24,4 +24,4 @@ On Windows: search "environment variables" in the Start menu, open **Edit enviro
 
 Without a key, `watch_video` still works and the two statistics tools return a message saying the key isn't set.
 
-Full setup instructions, including how to create the key: https://github.com/Yuuzulight/Rozetta#getting-a-youtube-api-key
+Full setup instructions, including how to create the key: https://github.com/Yuuzulight/Rozetta#getting-an-api-key

@@ -207,7 +207,7 @@ It will sit there waiting for input, which is what a healthy stdio server does. 
 
 ```bash
 python packaging/build_plugin.py              # portable, tracks the default branch
-python packaging/build_plugin.py --ref v0.1.0 # portable, pinned to a tag
+python packaging/build_plugin.py --ref v1.0.0 # portable, pinned to a tag
 python packaging/build_plugin.py --local      # points at this checkout's venv
 ```
 
@@ -225,7 +225,9 @@ The local flavour reads your key from `.env` in the repo root, since the server 
 
 161 tests, 98% coverage. They cover every documented failure mode, not just the happy paths: missing captions, private and age-restricted videos, the extraction library breaking, unavailable translations, hidden like counts, all four channel URL formats including the legacy fallback failing, quota exhaustion blocking before a request goes out, and the API key appearing in neither a tool schema nor a request URL.
 
-Nothing in the suite touches the network. The Data API is stubbed through an httpx mock transport and the transcript library is stubbed out.
+Nothing in the suite touches the network. The Data API is stubbed through an httpx mock transport and the transcript library is stubbed out. CI runs it on every push across Python 3.11–3.14 on both Linux and Windows, with a 90% coverage floor, and separately builds the plugin bundle and asserts it carries no machine-specific paths.
+
+A caveat worth stating, since it cost a real bug: **a green suite doesn't prove the scraping works.** Legacy `/c/` channel URLs resolved to the wrong channel for a while — returning genuine statistics for somebody else entirely — and every test passed throughout, because the tests fed it HTML I had written myself. What caught it was resolving the same channel both ways and comparing. If you touch anything that reads YouTube's markup, check it against the official API rather than against a fixture.
 
 ## Not in v1
 

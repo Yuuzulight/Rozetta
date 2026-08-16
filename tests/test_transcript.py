@@ -408,6 +408,27 @@ def test_translate_blowing_up_unexpectedly_is_an_extraction_failure(monkeypatch)
         fetch_transcript(VIDEO_ID, target_language="de", api=FakeApi([transcript]))
 
 
+def test_a_blocked_translation_points_at_the_tracks_that_would_work(monkeypatch):
+    # - Measured live: YouTube rate-limits translated captions far harder than
+    #   plain ones, so "try again later" sends the caller back into the same
+    #   wall when a real caption track would have fetched fine.
+    english = FakeTranscript(
+        language_code="en", translation_languages=[FakeLanguage("German", "de")]
+    )
+    spanish = FakeTranscript(language_code="es", is_generated=False)
+    monkeypatch.setattr(
+        english, "translate", lambda code: (_ for _ in ()).throw(RequestBlocked(VIDEO_ID))
+    )
+
+    with pytest.raises(TranscriptExtractionFailed) as excinfo:
+        fetch_transcript(VIDEO_ID, target_language="de", api=FakeApi([english, spanish]))
+
+    message = str(excinfo.value)
+    assert "rate-limited" in message
+    assert "en, es" in message
+    assert "omitting target_language" in message
+
+
 # -- no length cap ----------------------------------------------------------
 
 

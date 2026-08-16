@@ -38,6 +38,10 @@ When several caption tracks exist, Rozetta picks the one in the language actuall
 
 Pass `target_language` (`"es"`, `"ja"`, and so on) to get another language. If the video has a real caption track in that language it's used directly. Otherwise YouTube's own translation is applied, through the library's `.translate()` — no second dependency, no LLM translation step. If the language isn't available at all the call fails and lists the ones that are. It will never quietly hand back the original in a different language than you asked for.
 
+Worth knowing before you rely on it: **YouTube throttles translated captions far harder than ordinary ones.** Measured directly — a plain caption fetch succeeded, a `.translate()` call from the same address seconds later was refused, and a plain fetch straight after succeeded again. That's YouTube's gate, not this server's, and it happens with the transcript library called directly too.
+
+So asking for a language the video has a real track in is reliable. Asking for one it doesn't fails a fair amount of the time. The error says so and lists the languages that do have real tracks, rather than telling you to retry into the same wall.
+
 Failures are kept distinguishable, because they call for different reactions:
 
 | What happened | What you get |
@@ -217,7 +221,7 @@ The local flavour reads your key from `.env` in the repo root, since the server 
 .venv\Scripts\python.exe -m pytest --cov --cov-report=term-missing
 ```
 
-157 tests, 98% coverage. They cover every documented failure mode, not just the happy paths: missing captions, private and age-restricted videos, the extraction library breaking, unavailable translations, hidden like counts, all four channel URL formats including the legacy fallback failing, quota exhaustion blocking before a request goes out, and the API key appearing in neither a tool schema nor a request URL.
+161 tests, 98% coverage. They cover every documented failure mode, not just the happy paths: missing captions, private and age-restricted videos, the extraction library breaking, unavailable translations, hidden like counts, all four channel URL formats including the legacy fallback failing, quota exhaustion blocking before a request goes out, and the API key appearing in neither a tool schema nor a request URL.
 
 Nothing in the suite touches the network. The Data API is stubbed through an httpx mock transport and the transcript library is stubbed out.
 

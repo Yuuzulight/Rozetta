@@ -223,9 +223,35 @@ def _apply_target_language(
             )
         ) from exc
     except Exception as exc:
-        raise _map_library_error(exc, video_id) from exc
+        raise _translation_failure(exc, video_id, target_language, native_codes) from exc
 
     return translated, True
+
+
+def _translation_failure(
+    exc: Exception, video_id: str, target_language: str, native_codes: list[str]
+) -> Exception:
+    """Explain a blocked translation, and point at the tracks that would work.
+
+    Measured: plain caption fetches succeed from the same address seconds
+    before and after a translation request is refused, so YouTube gates the
+    translated-caption endpoint far harder than the normal one. The generic
+    upstream message is true but useless here — a caller told only "try later"
+    will retry into the same wall, when the video usually has real caption
+    tracks that fetch fine.
+    """
+    mapped = _map_library_error(exc, video_id)
+    if not isinstance(mapped, TranscriptExtractionFailed):
+        return mapped
+
+    alternatives = ", ".join(native_codes) or "none"
+    return TranscriptExtractionFailed(
+        f"{_UPSTREAM_HINT}. YouTube refused to translate video {video_id} into "
+        f"{target_language!r} ({type(exc).__name__}). Translated captions are rate-limited "
+        "much more aggressively than ordinary ones, so this often fails while plain "
+        f"transcript requests still work. Real caption tracks exist for: {alternatives}. "
+        "Requesting one of those, or omitting target_language, will usually succeed."
+    )
 
 
 def _unavailable_message(

@@ -237,3 +237,22 @@ def test_dotenv_never_overrides_what_the_client_passed_in(tmp_path, monkeypatch)
 
 def test_a_missing_dotenv_file_is_not_an_error(tmp_path):
     load_dotenv(tmp_path / "nope.env")
+
+
+def test_a_dotenv_written_with_a_bom_still_parses(tmp_path, monkeypatch):
+    # - PowerShell's Set-Content and several Windows editors add a BOM. Without
+    #   utf-8-sig the leading comment stops looking like a comment and, since it
+    #   contains an '=', gets imported as a junk variable.
+    monkeypatch.delenv("YOUTUBE_API_KEY", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "# Paste your key after the = sign\nYOUTUBE_API_KEY=from-bom-file\n",
+        encoding="utf-8-sig",
+    )
+
+    load_dotenv(env_file)
+
+    import os
+
+    assert os.environ["YOUTUBE_API_KEY"] == "from-bom-file"
+    assert not any(k.startswith("﻿") for k in os.environ)

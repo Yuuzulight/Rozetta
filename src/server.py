@@ -44,7 +44,10 @@ def load_dotenv(path: Path | None = None) -> None:
     """
     env_file = path or (REPO_ROOT / ".env")
     try:
-        lines = env_file.read_text(encoding="utf-8").splitlines()
+        # - utf-8-sig, not utf-8: Windows editors and PowerShell happily write a
+        #   BOM, which would otherwise glue itself to the first line and stop a
+        #   leading comment from being recognised as one.
+        lines = env_file.read_text(encoding="utf-8-sig").splitlines()
     except OSError:
         return
 

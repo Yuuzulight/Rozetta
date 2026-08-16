@@ -91,6 +91,8 @@ When the page fallback fails you get a clear error asking for the `@handle` or t
 
 `YOUTUBE_API_KEY` is read once, from the environment, when the server starts. It is never a tool argument and never appears in any tool's input schema. That's on purpose: MCP clients log tool calls, and a key passed as an argument ends up in those logs. There's a test asserting the key can't appear in a schema, so a future change can't quietly reintroduce it.
 
+It also travels to Google as an `X-goog-api-key` header rather than a `key=` query parameter. The query-string form is what the docs show, and it's a trap: httpx logs every request URL at INFO, an MCP server's stderr gets captured into the client's log files, and the result is your key sitting in plaintext on disk after any statistics call. Learned that one the hard way. A second test asserts no request URL ever contains the key, and httpx is pinned to WARNING at startup as a backstop.
+
 Transcripts don't need a key. If you never set one, `watch_video` still works and the two statistics tools fail with a clear message.
 
 ## Quota
@@ -149,6 +151,23 @@ Use the venv's Python rather than a bare `python`, and absolute paths throughout
 
 Restart Claude Desktop completely afterwards — quit it from the system tray, not just close the window.
 
+**Edit that file with Claude Desktop fully closed.** Recent versions rewrite it from memory when they exit, so an edit made while the app is running gets silently discarded — the server never appears, and nothing tells you why.
+
+### Claude Desktop, as a plugin
+
+Newer builds take a `.plugin` bundle instead, which sidesteps the config file entirely. A plugin is a zip containing `.claude-plugin/plugin.json` and a `.mcp.json` at the root:
+
+```
+rozetta/
+├── .claude-plugin/
+│   └── plugin.json     # name, version, description, author
+└── .mcp.json           # the same mcpServers block as above
+```
+
+Zip the directory contents, name it `rozetta.plugin`, and drag it onto Settings → Extensions. Note that the paths inside are absolute, so moving the repo means rebuilding the bundle.
+
+Plugins have no UI field for secrets, so put the key in `.env` in the repo root and let the server read it at startup. That file is gitignored. Write it as plain UTF-8 without a BOM if you can — the loader copes with one either way, but PowerShell's `Set-Content -Encoding utf8` adds one.
+
 ### Getting an API key
 
 Free, and no payment details required. Only the two statistics tools need it.
@@ -170,7 +189,7 @@ Your quota is 10,000 units a day, which is roughly 10,000 video or channel looku
 .venv\Scripts\python.exe -m pytest --cov --cov-report=term-missing
 ```
 
-155 tests, 98% coverage. They cover every documented failure mode, not just the happy paths: missing captions, private and age-restricted videos, the extraction library breaking, unavailable translations, hidden like counts, all four channel URL formats including the legacy fallback failing, quota exhaustion blocking before a request goes out, and the API key never appearing in a tool schema.
+157 tests, 98% coverage. They cover every documented failure mode, not just the happy paths: missing captions, private and age-restricted videos, the extraction library breaking, unavailable translations, hidden like counts, all four channel URL formats including the legacy fallback failing, quota exhaustion blocking before a request goes out, and the API key appearing in neither a tool schema nor a request URL.
 
 Nothing in the suite touches the network. The Data API is stubbed through an httpx mock transport and the transcript library is stubbed out.
 

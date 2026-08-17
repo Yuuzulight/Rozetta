@@ -1,6 +1,15 @@
-# Rozetta
+<p align="center">
+  <picture>
+    <source srcset="assets/banner-dark.svg" media="(prefers-color-scheme: dark)">
+    <img src="assets/banner-light.svg" alt="Rozetta — YouTube transcripts and statistics as MCP tools" width="820">
+  </picture>
+</p>
 
-[![CI](https://github.com/Yuuzulight/Rozetta/actions/workflows/ci.yml/badge.svg)](https://github.com/Yuuzulight/Rozetta/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://github.com/Yuuzulight/Rozetta/actions/workflows/ci.yml"><img src="https://github.com/Yuuzulight/Rozetta/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://github.com/Yuuzulight/Rozetta/releases/latest"><img src="https://img.shields.io/github/v/release/Yuuzulight/Rozetta" alt="Latest release"></a>
+</p>
 
 An MCP server that gives a model access to YouTube transcripts and public statistics.
 

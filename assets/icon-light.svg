@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="Rozetta">
+  <title>Rozetta</title>
+  <rect width="160" height="160" rx="34" fill="#FFFFFF"/>
+  <g transform="translate(80,80)">
+    <circle cx="0" cy="0" r="58" fill="#1F1D1A"/>
+    <circle cx="0" cy="0" r="58" fill="none" stroke="#C9BFA8" stroke-width="2" opacity="0.5"/>
+    <circle cx="0" cy="0" r="47" fill="none" stroke="#C9BFA8" stroke-width="1.5" opacity="0.28"/>
+    <rect x="-27" y="-23" width="11" height="46" rx="5.5" fill="#C0362C"/>
+    <path d="M-8 -23 L30 0 L-8 23 Z" fill="#EFE6D4"/>
+  </g>
+</svg>
